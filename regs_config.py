@@ -3,8 +3,8 @@ regs_config = {
             1 : {
                 'desc' : 'Unnamed: 2',
                 'bits' : 'Unnamed: 0',
-                'access' : 'Unnamed: 1',
-                'reset' : 'Bits'
+                'access' : 'Bits',
+                'reset' : 'Unnamed: 1',
                 },
             2 : {
                 'desc' : 'Unnamed: 7',
@@ -15,8 +15,8 @@ regs_config = {
             6 : {
                 'desc' : 'Unnamed: 2',
                 'bits' : 'Unnamed: 0',
-                'access' : 'Unnamed: 1',
-                'reset' : 'Bits'
+                'access' : 'Bits',
+                'reset' : 'Unnamed: 1',
                 },
             },
         'VS' : {
