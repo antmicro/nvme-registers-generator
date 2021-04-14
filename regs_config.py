@@ -183,7 +183,7 @@ regs_config = {
                 'reset' : 'Unnamed: 2'
                 },
             },
-        'PMRPCAP' : {
+        'PMRCAP' : {
             41 : {
                 'desc' : 'Unnamed: 7',
                 'bits' : 'Unnamed: 1',
@@ -219,7 +219,7 @@ regs_config = {
                 'reset' : 'Unnamed: 5'
                 },
             },
-        'PMERBS' : {
+        'PMREBS' : {
             50 : {
                 'desc' : 'Unnamed: 7',
                 'bits' : 'Unnamed: 1',
@@ -250,7 +250,7 @@ regs_config = {
                 'reset' : 'Unnamed: 5',
                 },
             },
-        'PMRMSCL' : {
+        'PMRMSC' : {
             57 : {
                 'desc' : 'Unnamed: 3',
                 'bits' : 'Unnamed: 1',
@@ -258,7 +258,7 @@ regs_config = {
                 'reset' : 'Unnamed: 2'
                 },
             },
-        'PMRMSCU' : {
+        'SQ0TDBL' : {
             58 : {
                 'desc' : 'Unnamed: 3',
                 'bits' : 'Unnamed: 1',
