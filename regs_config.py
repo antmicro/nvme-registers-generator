@@ -26,7 +26,7 @@ regs_config = {
                 },
             },
         'VS' : {
-            7 : {
+            12 : {
                 'desc' : 'Unnamed: 3',
                 'bits' : 'Unnamed: 1',
                 'access' : 'Bits',
