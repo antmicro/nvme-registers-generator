@@ -43,7 +43,7 @@ with open(reg_map_fname, "w") as reg_map:
 
 		name = line['Unnamed: 1']
 
-		if name == 'Reserved':
+		if name == 'Reserved' or name == 'SQ0TDBL':
 			continue
 
 		try:
