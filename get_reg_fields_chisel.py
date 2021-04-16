@@ -8,6 +8,8 @@
 import json
 from datetime import datetime
 from collections import OrderedDict
+import subprocess
+import os
 
 reg_info_fname = 'registers.json'
 
@@ -19,6 +21,8 @@ reg_file_fname = 'CSRMap.scala'
 reg_file_cls = 'CSRFile'
 
 timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+git_hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip().decode('ascii')
+fname = os.path.basename(__file__)
 
 reg_width = 32
 
@@ -58,7 +62,7 @@ def write_fields(file, name, fields, start, end):
 	file.write("}\n\n\n")
 
 with open(reg_defs_fname, "w") as reg_defs:
-	reg_defs.write(f"// Generated on {timestamp}\n")
+	reg_defs.write(f"// Generated on {timestamp} with {fname}, git rev {git_hash}\n")
 	reg_defs.write(f"package {reg_defs_pkg}\n\nimport chisel3._\n\n")
 	for reg in regs:
 		total_width = get_reg_width(regs[reg])

@@ -7,6 +7,8 @@
 
 import tabula
 from datetime import datetime
+import subprocess
+import os
 
 nvme_spec = 'NVM-Express-1_4-2019.06.10-Ratified.pdf'
 
@@ -20,6 +22,8 @@ reg_type = 'SimpleRegRegister'
 reg_def_base = 'Register'
 
 timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+git_hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip().decode('ascii')
+fname = os.path.basename(__file__)
 
 table = tabula.read_pdf(nvme_spec, pages='42-43', options="--use-line-returns", lattice=True)
 
@@ -27,7 +31,7 @@ def add_reg(file, name, addr, reg_type):
 	file.write(f"\t\t {hex(addr)} -> Module(new {reg_type}(new {name}, {reg_width*8})),\n")
 
 with open(reg_map_fname, "w") as reg_map:
-	reg_map.write(f"// Generated on {timestamp}\n")
+	reg_map.write(f"// Generated on {timestamp} with {fname}, git rev {git_hash}\n")
 	reg_map.write(f"package {reg_map_pkg}\n\nimport chisel3._\n\n")
 	reg_map.write(f"object {obj_name} {{\n")
 	reg_map.write(f"\tval regMap = Map [Int, {reg_def_base}] (\n")
