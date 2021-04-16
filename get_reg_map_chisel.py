@@ -18,8 +18,11 @@ reg_map_pkg = 'NVMeCore'
 reg_map_fname = 'CSRRegMap.scala'
 
 reg_width = 4
-reg_type = 'SimpleRegRegister'
-reg_def_base = 'Register'
+rw_reg_type = 'StorageRegister'
+ro_reg_type = 'ReadOnlyRegister'
+reg_def_base = 'BaseRegister'
+
+ro_regs = ['CAP', 'VS']
 
 timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
 git_hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip().decode('ascii')
@@ -54,11 +57,16 @@ with open(reg_map_fname, "w") as reg_map:
 
 		assert((size % reg_width) == 0)
 
+		reg_type = rw_reg_type
+
+		if name in ro_regs:
+			reg_type = ro_reg_type
+
 		if size == reg_width:
 			add_reg(reg_map, name, start, reg_type)
 		else:
 			for i in range(int(size/reg_width)):
 				add_reg(reg_map, name + '_' + str(i), start + i*reg_width, reg_type)
 
-	
+
 	reg_map.write("\t)\n}\n")
