@@ -1,0 +1,4 @@
+*.scala
+*.h
+*.json
+__pycache__/
