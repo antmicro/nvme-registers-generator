@@ -18,20 +18,25 @@ def perform_script_operations(
     with tempfile.TemporaryDirectory() as output_dir:
         output_path = os.path.join(output_dir, output_name)
 
+        # run script in standard way
         cmd = f"./{script} {input_path} {output_path}"
         subprocess.check_call(cmd, shell=True)
 
+        # fail when the output already exists
         with pytest.raises(Exception):
             cmd = f"./{script} {input_path} {output_path}"
             subprocess.check_call(cmd, shell=True)
 
+        # run script forcing output overwrite
         cmd = f"./{script} -f {input_path} {output_path}"
         subprocess.check_call(cmd, shell=True)
 
+        # run script with non-existing input file
         with pytest.raises(Exception):
             cmd = f"./{script} -v non-existing-file-path {output_path}"
             subprocess.check_call(cmd, shell=True)
 
+    # run script adding information about git sha
     if with_sha:
         with tempfile.TemporaryDirectory() as output_dir:
             output_path = os.path.join(output_dir, output_name)
@@ -39,6 +44,7 @@ def perform_script_operations(
             cmd = f"./{script} --git-sha={git_sha} {input_path} {output_path}"
             subprocess.check_call(cmd, shell=True)
 
+    # run script in verbose mode
     if with_verbose:
         with tempfile.TemporaryDirectory() as output_dir:
             output_path = os.path.join(output_dir, output_name)
