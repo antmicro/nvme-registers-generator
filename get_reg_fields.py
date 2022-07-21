@@ -3,25 +3,18 @@
 # Copyright (c) 2021 Antmicro <www.antmicro.com>
 #
 # SPDX-License-Identifier: Apache-2.0
-#
 
-import tabula
+import argparse
+import json
+import os
 import re
-import sys
+import tabula
+
 from collections import OrderedDict
-
 from regs_config import regs_config as config
-
-nvme_spec = "NVM-Express-1_4-2019.06.10-Ratified.pdf"
-
-table = tabula.read_pdf(
-    nvme_spec, pages="43-62", options="--use-line-returns", lattice=True
-)
-regname = re.compile("\([A-Z]+\)")
 
 
 def getname(description, reserved_count):
-
     if description == "Reserved":
         name = f"Reserved_{reserved_count}"
         reserved_count = reserved_count + 1
@@ -30,14 +23,13 @@ def getname(description, reserved_count):
         if name is not None:
             name = name.group().strip("()")
         else:
-            print(f"Unknown field [{description}]")
-            raise
+            raise Exception(f"Unknown field [{description}]")
     return name, reserved_count
 
 
 def fill_dict(name, bits, access, description, reset, width):
-    fields = dict()
-    fields[name] = dict()
+    fields = {}
+    fields[name] = {}
     fields[name]["bits"] = bits
     fields[name]["type"] = access
     fields[name]["description"] = description
@@ -49,8 +41,8 @@ def fill_dict(name, bits, access, description, reset, width):
 def getwidth(bits):
     if ":" in bits:
         return int(bits.split(":")[0]) - int(bits.split(":")[1]) + 1
-    else:
-        return 1
+
+    return 1
 
 
 def dump(table):
@@ -69,17 +61,14 @@ def validline(line, config):
 
 
 def parse(table, config, reserved_count):
-
     fields = OrderedDict()
     for line in table.iterrows():
-
-        # print(line)
         line = line[1]
         if validline(line, config):
             description = str(line[config["desc"]]).replace("\r", " ")
-
             bits = str(line[config["bits"]]).replace("\r", " ")
             name = None
+
             if "names" in config:
                 if bits in config["names"]:
                     name = config["names"][bits]
@@ -94,29 +83,39 @@ def parse(table, config, reserved_count):
     return fields, reserved_count
 
 
-regs = OrderedDict()
-test = False
-if not test:
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Extract the description of the nvme registers form PDF to JSON"
+    )
+    parser.add_argument("input", help="input PDF file with specification")
+    parser.add_argument("output", help="output JSON file")
+    parser.add_argument(
+        "-f", "--force", action="store_true", help="overwrite output file if exists"
+    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="verbose")
+    args = parser.parse_args()
+
+    if not os.path.isfile(args.input):
+        raise Exception("Input file does not exist")
+
+    if os.path.exists(args.output) and not args.force:
+        raise Exception(f"{args.output} exists. Use -f to overwrite it")
+
+    table = tabula.read_pdf(
+        args.input, pages="43-62", options="--use-line-returns", lattice=True
+    )
+
+    regs = OrderedDict()
     for reg in config:
         regs[reg] = OrderedDict()
         reserved_count = 0
         for tab in config[reg]:
-            print(f"reg: {reg}, tab: {tab}")
+            if args.verbose:
+                print(f"reg: {reg}, tab: {tab}")
             tmp_regs, reserved_count = parse(
                 table[tab].fillna("None"), config[reg][tab], reserved_count
             )
             regs[reg].update(tmp_regs)
-else:
-    reg = "PMRMSCL"
-    for tab in config[reg]:
-        print(f"reg: {reg}, tab: {tab}")
-        dump(table[tab].fillna("None"))
 
-import json
-
-with open("registers.json", "w") as fp:
-    json.dump(regs, fp, indent=4)
-
-from pprint import pprint as pp
-
-pp(regs)
+    with open(args.output, "w") as fp:
+        json.dump(regs, fp, indent=4)
