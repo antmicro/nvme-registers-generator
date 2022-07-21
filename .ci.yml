@@ -1,0 +1,19 @@
+image: debian:bullseye
+
+stages:
+  - test
+
+before_script:
+  - apt update
+  - apt install -y git python3 python3-pip
+  - pip3 install -r requirements.txt
+
+test:
+  stage: test
+  script:
+    - make test
+
+format:
+  stage: test
+  script:
+    - make format && test $(git status --porcelain | wc -l) -eq 0 || { git --no-pager diff; false; }
