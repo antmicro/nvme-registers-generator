@@ -18,6 +18,7 @@ from ident_config import ident_config as config
 PREFIX = "NVME_ID_FIELD_"
 PREFACE_TPL = "// Generated on {timestamp} with {file_name}{additional_info}\n\n"
 REG_WIDTH = 32
+SPEC_PAGES = "172-193"
 
 
 def getname(description):
@@ -89,7 +90,7 @@ if __name__ == "__main__":
         raise Exception(f"{args.input} exists. Use -f to overwrite it")
 
     table = tabula.read_pdf(
-        args.input, pages="172-193", options="--use-line-returns", lattice=True
+        args.input, pages=SPEC_PAGES, options="--use-line-returns", lattice=True
     )
 
     fields = OrderedDict()

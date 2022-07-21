@@ -20,6 +20,7 @@ REG_DEF_BASE = "BaseRegister"
 RW_REG_TYPE = "StorageRegister"
 RO_REG_TYPE = "ReadOnlyRegister"
 RO_REGS = ["CAP", "VS"]
+SPEC_PAGES = "42-43"
 
 
 def add_reg(file, name, addr, reg_type):
@@ -52,7 +53,7 @@ if __name__ == "__main__":
         raise Exception(f"{args.output} exists. Use -f to overwrite it")
 
     table = tabula.read_pdf(
-        args.input, pages="42-43", options="--use-line-returns", lattice=True
+        args.input, pages=SPEC_PAGES, options="--use-line-returns", lattice=True
     )
 
     timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")

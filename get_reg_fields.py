@@ -13,6 +13,8 @@ import tabula
 from collections import OrderedDict
 from regs_config import regs_config as config
 
+SPEC_PAGES = "43-62"
+
 
 def getname(description, reserved_count):
     if description == "Reserved":
@@ -102,7 +104,7 @@ if __name__ == "__main__":
         raise Exception(f"{args.output} exists. Use -f to overwrite it")
 
     table = tabula.read_pdf(
-        args.input, pages="43-62", options="--use-line-returns", lattice=True
+        args.input, pages=SPEC_PAGES, options="--use-line-returns", lattice=True
     )
 
     regs = OrderedDict()
