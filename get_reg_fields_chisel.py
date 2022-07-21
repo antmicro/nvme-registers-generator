@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2021 Antmicro <www.antmicro.com>
+# Copyright (c) 2022 Antmicro <www.antmicro.com>
 #
 # SPDX-License-Identifier: Apache-2.0
 
