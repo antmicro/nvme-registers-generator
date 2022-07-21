@@ -3,41 +3,23 @@
 # Copyright (c) 2021 Antmicro <www.antmicro.com>
 #
 # SPDX-License-Identifier: Apache-2.0
-#
 
+import argparse
 import json
-from datetime import datetime
-from collections import OrderedDict
-import subprocess
 import os
+import subprocess
 
-reg_info_fname = "registers.json"
+from collections import OrderedDict
+from datetime import datetime
 
-reg_defs_pkg = "NVMeCore"
-reg_defs_fname = "RegisterDefs.scala"
-reg_defs_base = "RegisterDef"
+REG_WIDTH = 32
+PREFACE_TPL = "// Generated on {timestamp} with {file_name}{additional_info}\n\n"
 
-reg_file_fname = "CSRMap.scala"
-reg_file_cls = "CSRFile"
-
-timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-git_hash = (
-    subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
-    .strip()
-    .decode("ascii")
-)
-fname = os.path.basename(__file__)
-
-reg_width = 32
-
-try:
-    regs = json.load(open(reg_info_fname, "r"), object_pairs_hook=OrderedDict)
-except Exception as e:
-    print(f"failed to parse file {reg_info_fname}: {e}")
-    exit(1)
+REG_DEFS_PKG = "NVMeCore"
+REG_DEFS_BASE = "RegisterDef"
 
 
-def get_reg_width(reg):
+def get_REG_WIDTH(reg):
     width = 0
     for field in reg:
         width += int(reg[field]["width"])
@@ -46,7 +28,7 @@ def get_reg_width(reg):
 
 
 def write_fields(file, name, fields, start, end):
-    file.write(f"class {name} extends {reg_defs_base} {{\n")
+    file.write(f"class {name} extends {REG_DEFS_BASE} {{\n")
     cnt = 0
     for field in fields:
         bits = fields[field]["bits"].split(":")
@@ -68,22 +50,61 @@ def write_fields(file, name, fields, start, end):
     file.write("}\n\n\n")
 
 
-with open(reg_defs_fname, "w") as reg_defs:
-    reg_defs.write(f"// Generated on {timestamp} with {fname}, git rev {git_hash}\n")
-    reg_defs.write(f"package {reg_defs_pkg}\n\nimport chisel3._\n\n")
-    for reg in regs:
-        total_width = get_reg_width(regs[reg])
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Generate a chisel file with the nvme registers"
+    )
+    parser.add_argument("input", help="input JSON file with registers description")
+    parser.add_argument("output", help="output chisel file")
+    parser.add_argument(
+        "-f", "--force", action="store_true", help="overwrite output file if exists"
+    )
+    parser.add_argument(
+        "--git-sha",
+        default=None,
+        help="Git sha written to the generated file as additional info",
+    )
+    args = parser.parse_args()
 
-        assert (total_width % reg_width) == 0
+    if not os.path.isfile(args.input):
+        raise Exception("Input file does not exist")
 
-        if reg_width == total_width:
-            write_fields(reg_defs, reg, regs[reg], 0, reg_width - 1)
-        else:
-            for i in range(int(total_width / reg_width)):
-                write_fields(
-                    reg_defs,
-                    reg + "_" + str(i),
-                    regs[reg],
-                    i * reg_width,
-                    (i + 1) * reg_width - 1,
-                )
+    if os.path.exists(args.output) and not args.force:
+        raise Exception(f"{args.input} exists. Use -f to overwrite it")
+
+    with open(args.input, "r") as registers_json:
+        try:
+            regs = json.load(registers_json, object_pairs_hook=OrderedDict)
+        except Exception as e:
+            print(f"failed to parse file {args.input}: {e}")
+            exit(1)
+
+    timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    file_name = os.path.basename(args.input)
+    additional_info = ""
+    if args.git_sha is not None:
+        additional_info = ", git_sha {}".format(args.git_sha)
+
+    preface = PREFACE_TPL.format(
+        timestamp=timestamp, file_name=file_name, additional_info=additional_info
+    )
+
+    with open(args.output, "w") as reg_defs:
+        reg_defs.write(preface)
+        reg_defs.write(f"package {REG_DEFS_PKG}\n\nimport chisel3._\n\n")
+
+        for reg in regs:
+            total_width = get_REG_WIDTH(regs[reg])
+            assert (total_width % REG_WIDTH) == 0
+
+            if REG_WIDTH == total_width:
+                write_fields(reg_defs, reg, regs[reg], 0, REG_WIDTH - 1)
+            else:
+                for i in range(int(total_width / REG_WIDTH)):
+                    write_fields(
+                        reg_defs,
+                        reg + "_" + str(i),
+                        regs[reg],
+                        i * REG_WIDTH,
+                        (i + 1) * REG_WIDTH - 1,
+                    )
