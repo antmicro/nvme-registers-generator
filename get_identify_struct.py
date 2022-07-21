@@ -3,37 +3,21 @@
 # Copyright (c) 2021 Antmicro <www.antmicro.com>
 #
 # SPDX-License-Identifier: Apache-2.0
-#
 
-import tabula
-from datetime import datetime
-import subprocess
-import re
-import sys
-from collections import OrderedDict
+import argparse
 import os
+import re
+import subprocess
+import sys
+import tabula
 
+from collections import OrderedDict
+from datetime import datetime
 from ident_config import ident_config as config
 
-nvme_spec = "NVM-Express-1_4-2019.06.10-Ratified.pdf"
-
-prefix = "NVME_ID_FIELD_"
-
-ident_fields_fname = "nvme_ident_fields.h"
-
-guard = ident_fields_fname.replace(".", "_").upper()
-
-timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-git_hash = (
-    subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
-    .strip()
-    .decode("ascii")
-)
-fname = os.path.basename(__file__)
-
-table = tabula.read_pdf(
-    nvme_spec, pages="172-193", options="--use-line-returns", lattice=True
-)
+PREFIX = "NVME_ID_FIELD_"
+PREFACE_TPL = "// Generated on {timestamp} with {file_name}{additional_info}\n\n"
+REG_WIDTH = 32
 
 
 def getname(description):
@@ -77,31 +61,60 @@ def parse(table, config):
     return fields
 
 
-fields = OrderedDict()
-
-
 def add_field(file, name, addr, size):
-    file.write(f"#define\t{prefix}{name}\t{hex(addr)}\n")
-    file.write(f"#define\t{prefix}{name}_SIZE\t{size}\n")
+    file.write(f"#define\t{PREFIX}{name}\t{hex(addr)}\n")
+    file.write(f"#define\t{PREFIX}{name}_SIZE\t{size}\n")
 
 
-for tab in config:
-    tmp_fields = parse(table[tab].fillna("None"), config[tab])
-    fields.update(tmp_fields)
-
-with open(ident_fields_fname, "w") as ident_fields:
-    ident_fields.write(
-        f"// Generated on {timestamp} with {fname}, git rev {git_hash}\n"
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Generate a header file with the nvme field identifiers"
     )
-    ident_fields.write(f"#ifndef {guard}\n#define {guard}\n\n")
-    for field in fields:
-        off = fields[field]["offset"].split(":")
-        start = int(off[-1])
-        end = int(off[0])
-        add_field(ident_fields, field, start, end - start + 1)
+    parser.add_argument("input", help="input PDF file with specification")
+    parser.add_argument("output", help="output header file")
+    parser.add_argument(
+        "-f", "--force", action="store_true", help="overwrite output file if exists"
+    )
+    parser.add_argument(
+        "--git-sha",
+        default=None,
+        help="Git sha written to generated file as additional info",
+    )
+    args = parser.parse_args()
 
-    ident_fields.write(f"#endif\n")
+    if not os.path.isfile(args.input):
+        raise Exception("Input file does not exist")
 
-from pprint import pprint as pp
+    if os.path.exists(args.output) and not args.force:
+        raise Exception(f"{args.input} exists. Use -f to overwrite it")
 
-pp(fields)
+    table = tabula.read_pdf(
+        args.input, pages="172-193", options="--use-line-returns", lattice=True
+    )
+
+    fields = OrderedDict()
+    for tab in config:
+        tmp_fields = parse(table[tab].fillna("None"), config[tab])
+        fields.update(tmp_fields)
+
+    timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    file_name = os.path.basename(args.input)
+
+    additional_info = ""
+    if args.git_sha is not None:
+        additional_info = ", git_sha {}".format(args.git_sha)
+
+    preface = PREFACE_TPL.format(
+        timestamp=timestamp, file_name=file_name, additional_info=additional_info
+    )
+    guard = args.input.replace(".", "_").upper()
+    with open(args.output, "w") as ident_fields:
+        ident_fields.write(preface)
+        ident_fields.write(f"#ifndef {guard}\n#define {guard}\n\n")
+        for field in fields:
+            off = fields[field]["offset"].split(":")
+            start = int(off[-1])
+            end = int(off[0])
+            add_field(ident_fields, field, start, end - start + 1)
+
+        ident_fields.write(f"#endif\n")
