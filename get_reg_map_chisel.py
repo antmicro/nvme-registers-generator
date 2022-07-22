@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
             reg_type = RW_REG_TYPE
             if name in RO_REGS:
-                reg_type = RW_REG_TYPE
+                reg_type = RO_REG_TYPE
 
             if size == REG_WIDTH:
                 add_reg(reg_map, name, start, reg_type)
