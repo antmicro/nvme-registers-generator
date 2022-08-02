@@ -108,7 +108,7 @@ if __name__ == "__main__":
     preface = PREFACE_TPL.format(
         timestamp=timestamp, file_name=file_name, additional_info=additional_info
     )
-    guard = args.input.replace(".", "_").upper()
+    guard = os.path.basename(args.output.replace(".", "_").upper())
     with open(args.output, "w") as ident_fields:
         ident_fields.write(preface)
         ident_fields.write(f"#ifndef {guard}\n#define {guard}\n\n")
