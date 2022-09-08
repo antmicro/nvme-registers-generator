@@ -1,7 +1,8 @@
 NVMe register extraction tool
 =============================
 
-Copyright (c) 2022 [Antmicro](https://www.antmicro.com)
+Copyright 2021-2022 Western Digital Corporation or its affiliates
+Copyright 2021-2022 Antmicro
 
 Those scripts can be used to generate register definitions needed by NVMe Chisel Core.
 
